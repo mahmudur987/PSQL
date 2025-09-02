@@ -1,126 +1,180 @@
-# Database Notes
 
-## 1. Database vs Data vs Information
-- **Database**: Organized collection of data stored electronically.
-- **Data**: Raw facts (e.g., `42`, `'John Doe'`, `'2025-08-31'`).
-- **Information**: Processed data that has meaning (e.g., `'John borrowed 42 books in August 2025'`).
-- **Analogy**: Data = Lego pieces, Database = box, Information = built Lego model.
+# DBMS & PostgreSQL Notes
 
-## 2. Why File Systems Fail
-1. Data redundancy & inconsistency.
-2. Difficulty in data retrieval.
-3. Poor data security.
-4. No concurrency control.
-5. Data integrity issues.
-6. Scalability problems.
+This repository contains notes and examples of key DBMS concepts and PostgreSQL basics, including normalization, functional dependencies, data anomalies, and many-to-many relationships.
 
-## 3. Types of Database Models
-1. **Hierarchical Model**: Tree structure, one parent per child.
-2. **Network Model**: Graph structure, multiple parents per child.
-3. **Relational Model**: Tables with rows & columns, uses SQL.
-4. **Entity-Relationship Model**: Conceptual, ER diagrams.
-5. **Object-Oriented Model**: Data as objects with methods.
-6. **Document Model (NoSQL)**: JSON/BSON documents.
-7. **Key-Value Model (NoSQL)**: Dictionary-like storage.
-8. **Column-Oriented Model**: Columns stored separately for analytics.
-- PostgreSQL: Object-relational, supports JSON & some object-oriented features.
+---
 
-## 4. Anatomy of a Table / Relation
-- **Table Name**: Unique identifier.
-- **Columns (Attributes)**: Name + data type.
-- **Rows (Tuples)**: Records.
-- **Primary Key (PK)**: Unique identifier.
-- **Foreign Key (FK)**: Links to another table.
-- **Constraints**: NOT NULL, UNIQUE, CHECK, DEFAULT.
-- **Schema**: Namespace organizing tables.
+## 1. Data Anomalies
 
-**Example Table: Students**
-| id (PK) | name | age | email |
-|---------|------|-----|-------|
-| 1       | Alice| 20  | alice@example.com |
-| 2       | Bob  | 22  | bob@example.com   |
+Data anomalies occur when a database is not properly normalized and has redundant or inconsistent data.  
 
-PostgreSQL Example:
+### Types of Data Anomalies
+
+1. **Insertion Anomaly**  
+   - Cannot insert data without unnecessary or incomplete information.  
+   **Example:** Cannot add a new course unless a student registers.
+
+2. **Update Anomaly**  
+   - Updating one piece of data requires multiple updates.  
+   **Example:** Changing "Dr. Lee" to "Dr. Leo" in multiple rows.
+
+3. **Deletion Anomaly**  
+   - Deleting one record accidentally removes other useful data.  
+   **Example:** Deleting Alice’s enrollment also removes info about the SQL course.
+
+---
+
+## 2. Normalization
+
+Normalization organizes data to reduce redundancy and improve integrity.  
+
+### Functional Dependency
+
+If attribute `A` uniquely determines attribute `B`:  
+```
+A → B
+```
+**Example:**  
+- `StudentID → StudentName`  
+- `Course → Instructor`
+
+### Normal Forms
+
+#### 2.1 First Normal Form (1NF)
+- No repeating groups or multi-valued attributes.  
+- Every cell contains atomic (indivisible) values.
+
+**Example (Before 1NF):**
+| StudentID | StudentName | Courses        |
+|-----------|-------------|----------------|
+| 1         | Alice       | DBMS, SQL      |
+
+**After 1NF:**
+| StudentID | StudentName | Course   |
+|-----------|-------------|----------|
+| 1         | Alice       | DBMS     |
+| 1         | Alice       | SQL      |
+
+#### 2.2 Second Normal Form (2NF)
+- Table is in 1NF.  
+- No partial dependency (non-key attributes depend on the **whole** primary key).
+
+**Example (Before 2NF):**
+| StudentID | CourseID | StudentName | CourseName | Instructor |
+|-----------|----------|-------------|------------|------------|
+
+**After 2NF (Split tables):**
+
+**Students Table**
+| StudentID | StudentName |
+|-----------|-------------|
+
+**Courses Table**
+| CourseID | CourseName | Instructor |
+
+**Enrollment Table**
+| StudentID | CourseID |
+
+#### 2.3 Third Normal Form (3NF)
+- Table is in 2NF.  
+- No transitive dependency (non-key attributes do not depend on other non-key attributes).
+
+**Example (Before 3NF):**
+| StudentID | StudentName | DeptID | DeptName | DeptHead |
+
+**After 3NF (Split tables):**
+
+**Students Table**
+| StudentID | StudentName | DeptID |
+
+**Departments Table**
+| DeptID | DeptName | DeptHead |
+
+#### 2.4 Boyce–Codd Normal Form (BCNF)
+- Every determinant is a candidate key.  
+- Stronger version of 3NF to eliminate remaining anomalies.
+
+---
+
+## 3. Decomposition
+
+### Lossless Decomposition
+- Original relation can be **reconstructed** by joining decomposed tables.  
+**Example:** Students, Courses, and Enrollment tables.
+
+### Lossy Decomposition
+- Original relation **cannot be perfectly reconstructed**; spurious tuples may appear.  
+**Example:** Joining Employees and Departments on `EmpName` can produce incorrect rows.
+
+---
+
+## 4. Resolving Many-to-Many Relationship
+
+- Direct M:N relationship is not allowed.  
+- Use a **junction (bridge) table**.
+
+**Example:** Students and Courses
+
+**Students Table**
+| StudentID | StudentName |
+
+**Courses Table**
+| CourseID | CourseName |
+
+**Enrollment Table**
+| StudentID | CourseID |
+
+**PostgreSQL Implementation:**
 ```sql
 CREATE TABLE Students (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    age INT CHECK (age > 0),
-    email VARCHAR(150) UNIQUE
+    StudentID SERIAL PRIMARY KEY,
+    StudentName VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Courses (
+    CourseID SERIAL PRIMARY KEY,
+    CourseName VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Enrollment (
+    StudentID INT REFERENCES Students(StudentID),
+    CourseID INT REFERENCES Courses(CourseID),
+    PRIMARY KEY (StudentID, CourseID)
 );
 ```
 
-## 5. Keys in Databases
+---
 
-### Super Key
-- Any set of columns that **uniquely identifies a row**.
-- Can contain extra attributes.
-- Example: `{id}`, `{email}`, `{id, name}`
+## 5. PostgreSQL Overview
 
-### Candidate Key
-- Minimal super key (no redundant columns).
-- Every table can have multiple candidate keys.
+**PostgreSQL** is a powerful, open-source **object-relational database system (ORDBMS)**.
 
-### Primary Key
-- Chosen candidate key, main identifier.
-- Cannot be NULL.
+### Key Features
+- Open-source & free  
+- ACID compliant  
+- Supports SQL standards  
+- Advanced data types (JSON, ARRAY, UUID, HSTORE)  
+- Extensible and customizable  
+- Multi-Version Concurrency Control (MVCC)  
+- Strong data integrity with constraints and triggers  
 
-### Alternate Key
-- Candidate keys not chosen as primary key.
-
-### Simple Key
-- Single-column key.
-
-### Composite Key
-- Multiple columns combined to uniquely identify a row.
-- Example: `(student_id, course_id)` in an enrollments table.
-
-### Subsets & Proper Subsets
-- **Subset**: Any set of elements within a set.
-- **Proper Subset**: Subset that is **smaller than the original set**.
-- Used to check minimality when finding candidate keys.
-
-### Foreign Key (FK)
-- Column in one table referencing **Primary Key** in another.
-- Maintains **referential integrity**.
-- Supports cascading actions: `ON DELETE CASCADE`, `ON UPDATE CASCADE`, `ON DELETE SET NULL`.
-
-PostgreSQL Example:
+### Example
 ```sql
-CREATE TABLE Enrollments (
-    enroll_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES Students(student_id) ON DELETE CASCADE,
-    course_id VARCHAR(20) NOT NULL
+CREATE TABLE Students (
+    StudentID SERIAL PRIMARY KEY,
+    StudentName VARCHAR(50),
+    Age INT
 );
+
+INSERT INTO Students (StudentName, Age)
+VALUES ('Alice', 21), ('Bob', 22);
+
+SELECT * FROM Students;
 ```
 
-## 6. Database Design Process (Step-by-Step)
-1. Gather requirements (functional & non-functional).
-2. Identify entities & attributes.
-3. Define relationships (1:1, 1:N, M:N).
-4. Choose keys (PK, Alternate, Composite, FKs).
-5. Normalize to remove redundancy (1NF → 3NF).
-6. Map to relational schema (tables + columns + constraints).
-7. Choose data types & constraints.
-8. Indexing strategy.
-9. Physical design & performance.
-10. Implement DDL (PostgreSQL).
-11. Seed, import & manage migrations.
-12. Test data & integrity.
-13. Security & access control (roles, RLS).
-14. Backup, monitoring & maintenance.
-15. Change management.
+---
 
-## 7. SDLC (Software Development Life Cycle)
-- Structured process for software development.
-- Phases:
-  1. Requirement Analysis (capture functional & non-functional requirements)
-  2. System Design (DB design, architecture)
-  3. Implementation / Coding (write code + DB schema)
-  4. Testing (unit, integration, system, performance)
-  5. Deployment (move to production, apply migrations)
-  6. Maintenance (bug fixes, updates, performance tuning)
-
-- SDLC Models: Waterfall, Iterative, Agile, V-Model, Spiral.
-- Database design is critical during **System Design & Implementation** phases.
-
+## 6. References
+- PostgreSQL Official Documentation: https://www.postgresql.org/docs/
+- Database System Concepts by Silberschatz, Korth, and Sudarshan  

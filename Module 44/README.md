@@ -1,180 +1,225 @@
+# SQL Beginner's Guide with PostgreSQL Examples
 
-# DBMS & PostgreSQL Notes
+## Table of Contents
 
-This repository contains notes and examples of key DBMS concepts and PostgreSQL basics, including normalization, functional dependencies, data anomalies, and many-to-many relationships.
-
----
-
-## 1. Data Anomalies
-
-Data anomalies occur when a database is not properly normalized and has redundant or inconsistent data.  
-
-### Types of Data Anomalies
-
-1. **Insertion Anomaly**  
-   - Cannot insert data without unnecessary or incomplete information.  
-   **Example:** Cannot add a new course unless a student registers.
-
-2. **Update Anomaly**  
-   - Updating one piece of data requires multiple updates.  
-   **Example:** Changing "Dr. Lee" to "Dr. Leo" in multiple rows.
-
-3. **Deletion Anomaly**  
-   - Deleting one record accidentally removes other useful data.  
-   **Example:** Deleting Alice’s enrollment also removes info about the SQL course.
+1. [Introduction to SQL](#introduction-to-sql)
+2. [pgAdmin Basics](#pgadmin-basics)
+3. [Beekeeper Studio Installation](#beekeeper-studio-installation)
+4. [SQL Data Types](#sql-data-types)
+   - Integer Types
+   - Boolean Type
+   - Other Types
+5. [Creating and Dropping Databases & Tables](#creating-and-dropping-databases--tables)
+6. [Column Constraints](#column-constraints)
+7. [Multiple Constraints & Functions](#multiple-constraints--functions)
+8. [Primary Key & Unique Constraints](#primary-key--unique-constraints)
+9. [Inserting Data](#inserting-data)
+   - With Column Names
+   - Without Column Names
+   - Multiple Rows
+   - Using SELECT
+   - Using RETURNING
 
 ---
 
-## 2. Normalization
+## Introduction to SQL
 
-Normalization organizes data to reduce redundancy and improve integrity.  
+- SQL (Structured Query Language) is used to interact with relational databases like PostgreSQL, MySQL, SQLite, SQL Server.
+- Main categories of SQL commands:
+  - **DDL:** `CREATE`, `DROP`
+  - **DML:** `INSERT`, `UPDATE`, `DELETE`
+  - **DQL:** `SELECT`
+  - **DCL:** `GRANT`, `REVOKE`
 
-### Functional Dependency
+### Example:
 
-If attribute `A` uniquely determines attribute `B`:  
-```
-A → B
-```
-**Example:**  
-- `StudentID → StudentName`  
-- `Course → Instructor`
-
-### Normal Forms
-
-#### 2.1 First Normal Form (1NF)
-- No repeating groups or multi-valued attributes.  
-- Every cell contains atomic (indivisible) values.
-
-**Example (Before 1NF):**
-| StudentID | StudentName | Courses        |
-|-----------|-------------|----------------|
-| 1         | Alice       | DBMS, SQL      |
-
-**After 1NF:**
-| StudentID | StudentName | Course   |
-|-----------|-------------|----------|
-| 1         | Alice       | DBMS     |
-| 1         | Alice       | SQL      |
-
-#### 2.2 Second Normal Form (2NF)
-- Table is in 1NF.  
-- No partial dependency (non-key attributes depend on the **whole** primary key).
-
-**Example (Before 2NF):**
-| StudentID | CourseID | StudentName | CourseName | Instructor |
-|-----------|----------|-------------|------------|------------|
-
-**After 2NF (Split tables):**
-
-**Students Table**
-| StudentID | StudentName |
-|-----------|-------------|
-
-**Courses Table**
-| CourseID | CourseName | Instructor |
-
-**Enrollment Table**
-| StudentID | CourseID |
-
-#### 2.3 Third Normal Form (3NF)
-- Table is in 2NF.  
-- No transitive dependency (non-key attributes do not depend on other non-key attributes).
-
-**Example (Before 3NF):**
-| StudentID | StudentName | DeptID | DeptName | DeptHead |
-
-**After 3NF (Split tables):**
-
-**Students Table**
-| StudentID | StudentName | DeptID |
-
-**Departments Table**
-| DeptID | DeptName | DeptHead |
-
-#### 2.4 Boyce–Codd Normal Form (BCNF)
-- Every determinant is a candidate key.  
-- Stronger version of 3NF to eliminate remaining anomalies.
-
----
-
-## 3. Decomposition
-
-### Lossless Decomposition
-- Original relation can be **reconstructed** by joining decomposed tables.  
-**Example:** Students, Courses, and Enrollment tables.
-
-### Lossy Decomposition
-- Original relation **cannot be perfectly reconstructed**; spurious tuples may appear.  
-**Example:** Joining Employees and Departments on `EmpName` can produce incorrect rows.
-
----
-
-## 4. Resolving Many-to-Many Relationship
-
-- Direct M:N relationship is not allowed.  
-- Use a **junction (bridge) table**.
-
-**Example:** Students and Courses
-
-**Students Table**
-| StudentID | StudentName |
-
-**Courses Table**
-| CourseID | CourseName |
-
-**Enrollment Table**
-| StudentID | CourseID |
-
-**PostgreSQL Implementation:**
 ```sql
-CREATE TABLE Students (
-    StudentID SERIAL PRIMARY KEY,
-    StudentName VARCHAR(50) NOT NULL
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(150)
 );
+SELECT * FROM users;
+pgAdmin Basics
+GUI tool for managing PostgreSQL databases.
 
-CREATE TABLE Courses (
-    CourseID SERIAL PRIMARY KEY,
-    CourseName VARCHAR(50) NOT NULL
-);
+Key Steps:
 
-CREATE TABLE Enrollment (
-    StudentID INT REFERENCES Students(StudentID),
-    CourseID INT REFERENCES Courses(CourseID),
-    PRIMARY KEY (StudentID, CourseID)
+Connect to server
+
+Create database:
+
+
+CREATE DATABASE mydb;
+Create table:
+
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(150)
 );
+Insert & query data
+
+Export/import CSV
+
+Beekeeper Studio Installation
+Download from https://www.beekeeperstudio.io/download
+
+Install .exe on Windows
+
+Launch → Create connection → Enter host, port, user, password, database
+
+Features: Query editor, table browser, multi-database support, export data
+
+SQL Data Types
+Integer Types
+Type	Storage	Range	Example
+SMALLINT	2 bytes	-32,768 to 32,767	age
+INTEGER (INT)	4 bytes	-2B to 2B	id
+BIGINT	8 bytes	Very large	financial totals
+SERIAL	4 bytes	auto-increment	primary keys
+BIGSERIAL	8 bytes	auto-increment	large IDs
+
+Boolean Type
+Stores TRUE or FALSE
+
+
+is_active BOOLEAN DEFAULT TRUE;
+Other Types
+Text/Character: VARCHAR(n), TEXT, CHAR(n)
+
+Date/Time: DATE, TIME, TIMESTAMP, TIMESTAMPTZ, INTERVAL
+
+UUID: UUID DEFAULT gen_random_uuid()
+
+JSON/JSONB: for structured data
+
+Array: tags TEXT[]
+
+Binary: BYTEA
+
+Enum: user-defined set
+
+IP: CIDR, INET
+
+Creating and Dropping Databases & Tables
+Create Database
+
+CREATE DATABASE library;
+\c library
+Drop Database
+
+DROP DATABASE library;
+DROP DATABASE library WITH (FORCE);
+Create Table
+
+CREATE TABLE books (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    author VARCHAR(100),
+    published_year INT,
+    available BOOLEAN DEFAULT TRUE
+);
+Drop Table
+
+DROP TABLE books;
+DROP TABLE IF EXISTS books;
+DROP TABLE books CASCADE; -- removes dependent objects
+Column Constraints
+Constraint	Description	Example
+NOT NULL	Cannot be empty	name VARCHAR(100) NOT NULL
+UNIQUE	All values must be unique	email VARCHAR(150) UNIQUE
+PRIMARY KEY	Unique + Not Null	id SERIAL PRIMARY KEY
+DEFAULT	Default value if not provided	is_active BOOLEAN DEFAULT TRUE
+CHECK	Restrict values	age SMALLINT CHECK (age >= 0)
+FOREIGN KEY	Link to another table	user_id INT REFERENCES users(id)
+
+Example:
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    age SMALLINT CHECK (age >= 0),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+Multiple Constraints & Functions
+Using Functions in Constraints
+DEFAULT with function: created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+CHECK with function:
+
+
+CREATE TABLE employees (
+    emp_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL CHECK (initcap(name) = name),
+    salary NUMERIC CHECK (salary > 0),
+    join_date DATE DEFAULT CURRENT_DATE
+);
+Custom Function Example
+
+CREATE FUNCTION is_adult(age SMALLINT) RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN age >= 18;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TABLE members (
+    member_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age SMALLINT CHECK (is_adult(age))
+);
+Primary Key & Unique Constraints
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    age SMALLINT CHECK (age >= 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+id → PRIMARY KEY → unique + not null
+
+email → UNIQUE → no duplicates
+
+Inserting Data
+With Column Names
+
+INSERT INTO users (name, email, age)
+VALUES ('Alice', 'alice@mail.com', 25);
+Without Column Names
+
+INSERT INTO users
+VALUES (DEFAULT, 'Bob', 'bob@mail.com', 30, DEFAULT, DEFAULT);
+Multiple Rows
+
+INSERT INTO users (name, email, age)
+VALUES
+('Charlie', 'charlie@mail.com', 28),
+('Diana', 'diana@mail.com', 22);
+Using SELECT
+
+INSERT INTO users (name, email, age)
+SELECT name, email, age FROM temp_users WHERE age >= 18;
+Using RETURNING
+
+INSERT INTO users (name, email, age)
+VALUES ('Eve', 'eve@mail.com', 35)
+RETURNING id, created_at;
+✅ General Insert Patterns
+
+
+-- Single Row
+INSERT INTO table_name (col1, col2) VALUES (v1, v2);
+
+-- Multiple Rows
+INSERT INTO table_name (col1, col2) VALUES (v1,v2), (v3,v4);
+
+-- Using SELECT
+INSERT INTO table_name (col1, col2) SELECT colA, colB FROM other_table;
+
+-- Returning values
+INSERT INTO table_name (...) VALUES (...) RETURNING column_name;
 ```
-
----
-
-## 5. PostgreSQL Overview
-
-**PostgreSQL** is a powerful, open-source **object-relational database system (ORDBMS)**.
-
-### Key Features
-- Open-source & free  
-- ACID compliant  
-- Supports SQL standards  
-- Advanced data types (JSON, ARRAY, UUID, HSTORE)  
-- Extensible and customizable  
-- Multi-Version Concurrency Control (MVCC)  
-- Strong data integrity with constraints and triggers  
-
-### Example
-```sql
-CREATE TABLE Students (
-    StudentID SERIAL PRIMARY KEY,
-    StudentName VARCHAR(50),
-    Age INT
-);
-
-INSERT INTO Students (StudentName, Age)
-VALUES ('Alice', 21), ('Bob', 22);
-
-SELECT * FROM Students;
-```
-
----
-
-## 6. References
-- PostgreSQL Official Documentation: https://www.postgresql.org/docs/
-- Database System Concepts by Silberschatz, Korth, and Sudarshan  
