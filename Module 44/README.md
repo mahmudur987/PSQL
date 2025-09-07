@@ -26,42 +26,21 @@
 
 - SQL (Structured Query Language) is used to interact with relational databases like PostgreSQL, MySQL, SQLite, SQL Server.
 - Main categories of SQL commands:
-  - **DDL:** `CREATE`, `DROP`
+
+  - **DDL:** `CREATE`, `DROP`, `ALTER`, `TRUNCATE`
+    - `CREATE` a new database object (e.g., table, view, index).
+    - `DROP` an existing database object.
+    - `ALTER` an existing database object (e.g., add column, change column type).
+    - `TRUNCATE` a table (i.e., delete all rows without logging).
   - **DML:** `INSERT`, `UPDATE`, `DELETE`
+    - `INSERT` new rows into a table.
+    - `UPDATE` existing rows in a table.
+    - `DELETE` rows from a table.
   - **DQL:** `SELECT`
+    - Retrieve data from a table (or tables).
   - **DCL:** `GRANT`, `REVOKE`
-
-### Example:
-
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(150)
-);
-SELECT * FROM users;
-pgAdmin Basics
-GUI tool for managing PostgreSQL databases.
-
-Key Steps:
-
-Connect to server
-
-Create database:
-
-
-CREATE DATABASE mydb;
-Create table:
-
-
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(150)
-);
-Insert & query data
-
-Export/import CSV
+    - `GRANT` privileges to a user or role.
+    - `REVOKE` privileges from a user or role.
 
 Beekeeper Studio Installation
 Download from https://www.beekeeperstudio.io/download
@@ -72,36 +51,7 @@ Launch → Create connection → Enter host, port, user, password, database
 
 Features: Query editor, table browser, multi-database support, export data
 
-SQL Data Types
-Integer Types
-Type	Storage	Range	Example
-SMALLINT	2 bytes	-32,768 to 32,767	age
-INTEGER (INT)	4 bytes	-2B to 2B	id
-BIGINT	8 bytes	Very large	financial totals
-SERIAL	4 bytes	auto-increment	primary keys
-BIGSERIAL	8 bytes	auto-increment	large IDs
-
-Boolean Type
-Stores TRUE or FALSE
-
-
-is_active BOOLEAN DEFAULT TRUE;
-Other Types
-Text/Character: VARCHAR(n), TEXT, CHAR(n)
-
-Date/Time: DATE, TIME, TIMESTAMP, TIMESTAMPTZ, INTERVAL
-
-UUID: UUID DEFAULT gen_random_uuid()
-
-JSON/JSONB: for structured data
-
-Array: tags TEXT[]
-
-Binary: BYTEA
-
-Enum: user-defined set
-
-IP: CIDR, INET
+```sql
 
 Creating and Dropping Databases & Tables
 Create Database
@@ -125,8 +75,51 @@ Drop Table
 
 DROP TABLE books;
 DROP TABLE IF EXISTS books;
-DROP TABLE books CASCADE; -- removes dependent objects
-Column Constraints
+DROP TABLE books CASCADE; -
+
+## SQL Data Types
+
+
+
+
+
+Integer Types
+Type	Storage	Range	Example
+SMALLINT	2 bytes	-32,768 to 32,767	age
+INTEGER (INT)	4 bytes	-2B to 2B	id
+BIGINT	8 bytes	Very large	financial totals
+SERIAL	4 bytes	auto-increment	primary keys
+BIGSERIAL	8 bytes	auto-increment	large IDs
+
+
+
+
+
+###   Boolean Type
+Stores TRUE or FALSE
+
+
+is_active BOOLEAN DEFAULT TRUE;
+Other Types
+
+
+###   Text/Character: VARCHAR(n), TEXT, CHAR(n)
+
+###   Date/Time: DATE, TIME, TIMESTAMP, TIMESTAMPTZ, INTERVAL
+
+###   UUID: UUID DEFAULT gen_random_uuid()
+
+###   JSON/JSONB: for structured data
+
+###   Array: tags TEXT[]
+
+###  Binary: BYTEA
+
+###  Enum: user-defined set
+
+
+
+## Column Constraints
 Constraint	Description	Example
 NOT NULL	Cannot be empty	name VARCHAR(100) NOT NULL
 UNIQUE	All values must be unique	email VARCHAR(150) UNIQUE
@@ -145,6 +138,11 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+
+
 Multiple Constraints & Functions
 Using Functions in Constraints
 DEFAULT with function: created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -158,6 +156,12 @@ CREATE TABLE employees (
     salary NUMERIC CHECK (salary > 0),
     join_date DATE DEFAULT CURRENT_DATE
 );
+
+
+
+
+
+
 Custom Function Example
 
 CREATE FUNCTION is_adult(age SMALLINT) RETURNS BOOLEAN AS $$
@@ -184,7 +188,18 @@ id → PRIMARY KEY → unique + not null
 
 email → UNIQUE → no duplicates
 
+
+
+
+
+
+
+
 Inserting Data
+
+
+
+
 With Column Names
 
 INSERT INTO users (name, email, age)
@@ -203,11 +218,18 @@ Using SELECT
 
 INSERT INTO users (name, email, age)
 SELECT name, email, age FROM temp_users WHERE age >= 18;
+
+
+
 Using RETURNING
 
 INSERT INTO users (name, email, age)
 VALUES ('Eve', 'eve@mail.com', 35)
 RETURNING id, created_at;
+
+
+
+
 ✅ General Insert Patterns
 
 
